@@ -85,14 +85,9 @@ def _rlcd_impl(
     if parameters['stages']>=1:
         stage1_method = parameters['stage1_method']
         if parameters['sample']:
-            supported_stage1_methods = {'all', 'ges'}
-            if stage1_method == 'fges':
-                raise ValueError(
-                    "stage1_method='fges' is unavailable because causal-learn does not "
-                    "bundle the required Tetrad backend. Use stage1_method='ges' or 'all'."
-                )
+            supported_stage1_methods = {'ges'}
         else:
-            supported_stage1_methods = {'all', 'fci'}
+            supported_stage1_methods = {'fci'}
 
         if stage1_method not in supported_stage1_methods:
             supported = ', '.join(sorted(supported_stage1_methods))
@@ -101,19 +96,13 @@ def _rlcd_impl(
             )
 
         if not parameters['sample']:
-            if stage1_method == 'all':
-                Adj_stage1 = np.ones((len(xvars),len(xvars)))
-                partition = [xvars]
-            elif stage1_method == 'fci':
+            if stage1_method == 'fci':
                 from .FCI_CovRank import fci_true_cov_rank
                 G, edges = fci_true_cov_rank(np.zeros((1, len(xvars))), parameters['citest_method'])
                 Adj_stage1 = process_fci_result(G.graph)
                 partition = getPartition(xvars, abs(Adj_stage1), parameters['stage1_partition_thres'])
         else:
-            if stage1_method == 'all':
-                Adj_stage1 = np.ones((len(xvars),len(xvars)))
-                partition = [xvars]
-            elif stage1_method == 'ges':
+            if stage1_method == 'ges':
                 LOGGER.info('running ges')
                 from causallearn.search.ScoreBased.GES import ges
                 Record = ges(
@@ -236,8 +225,9 @@ def RLCD(
     ranktest_method : object, optional
         Rank test object with a ``test(pcols, qcols, r, alpha)`` method. If
         omitted, ``Chi2RankTest(data)`` is used.
-    stage1_method : {"ges", "all"}, default="ges"
-        Stage-1 method used to partition observed variables.
+    stage1_method : str, default="ges"
+        Stage-1 method used to partition observed variables. Currently only
+        ``"ges"`` is supported for sample data.
     alpha_dict : dict, optional
         Significance levels for rank tests by rank.
     maxk : int, default=3

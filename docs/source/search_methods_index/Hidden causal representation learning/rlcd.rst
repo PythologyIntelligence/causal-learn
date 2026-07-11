@@ -79,7 +79,6 @@ For example, the following data has five observed variables generated from one s
     cg = RLCD(
         data,
         ranktest_method=Chi2RankTest(data),
-        stage1_method="all",
         maxk=2,
     )
 
@@ -100,7 +99,7 @@ and n_features is the number of features.
 
 **ranktest_method**: rank test object, optional. The rank test object should provide a ``test(pcols, qcols, r, alpha)`` method. If not provided, ``Chi2RankTest(data)`` is used.
 
-**stage1_method**: {'ges', 'all'}. Stage-1 method used to partition observed variables. Default: 'ges'. The old ``'fges'`` option is unavailable because causal-learn does not bundle a Tetrad backend.
+**stage1_method**: str. Stage-1 method used to partition observed variables. Currently only ``'ges'`` is supported for sample data. Default: ``'ges'``.
 
 **stage1_ges_sparsity**: float. BIC penalty coefficient used by the GES stage. Larger values produce sparser stage-1 graphs. Default: 0.5.
 

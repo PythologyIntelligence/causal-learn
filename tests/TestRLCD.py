@@ -39,16 +39,10 @@ class TestRLCD(unittest.TestCase):
         np.testing.assert_array_equal(args[0], data)
         self.assertEqual(kwargs, {"lambda_value": 1.25})
 
-    def test_fges_reports_unavailable_backend(self):
-        data = np.random.default_rng(4).normal(size=(50, 4))
-
-        with self.assertRaisesRegex(ValueError, "does not bundle the required Tetrad backend"):
-            RLCD(data, stage1_method="fges", stages=1)
-
     def test_unknown_sample_stage1_method_lists_supported_values(self):
         data = np.random.default_rng(5).normal(size=(50, 4))
 
-        with self.assertRaisesRegex(ValueError, "supported values are: all, ges"):
+        with self.assertRaisesRegex(ValueError, "supported values are: ges"):
             RLCD(data, stage1_method="unknown", stages=1)
 
     def test_get_partition_merges_overlapping_maximal_cliques(self):
@@ -67,7 +61,8 @@ class TestRLCD(unittest.TestCase):
             {frozenset(names)},
         )
 
-    def test_rlcd_recovers_linear_gaussian_hidden_structure(self):
+    @patch("causallearn.search.ScoreBased.GES.ges")
+    def test_rlcd_recovers_linear_gaussian_hidden_structure(self, mock_ges):
         rng = np.random.default_rng(1)
         sample_size = 2000
         L1 = rng.normal(size=sample_size)
@@ -80,11 +75,15 @@ class TestRLCD(unittest.TestCase):
         X6 = 1.5 * L2 + 0.05 * rng.normal(size=sample_size)
         data = np.column_stack([X1, X2, X3, X4, X5, X6])
         data = (data - data.mean(axis=0)) / data.std(axis=0)
+        stage1_adjacency = np.ones((6, 6), dtype=int)
+        np.fill_diagonal(stage1_adjacency, 0)
+        mock_ges.return_value = {
+            "G": SimpleNamespace(graph=stage1_adjacency)
+        }
 
         cg = RLCD(
             data,
             ranktest_method=Chi2RankTest(data),
-            stage1_method="all",
             alpha_dict={0: 0.01, 1: 0.01, 2: 0.01, 3: 0.01},
             maxk=2,
         )
