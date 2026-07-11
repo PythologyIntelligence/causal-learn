@@ -100,7 +100,9 @@ and n_features is the number of features.
 
 **ranktest_method**: rank test object, optional. The rank test object should provide a ``test(pcols, qcols, r, alpha)`` method. If not provided, ``Chi2RankTest(data)`` is used.
 
-**stage1_method**: str. Stage-1 method used to partition observed variables. Default: 'ges'.
+**stage1_method**: {'ges', 'all'}. Stage-1 method used to partition observed variables. Default: 'ges'. The old ``'fges'`` option is unavailable because causal-learn does not bundle a Tetrad backend.
+
+**stage1_ges_sparsity**: float. BIC penalty coefficient used by the GES stage. Larger values produce sparser stage-1 graphs. Default: 0.5.
 
 **alpha_dict**: dict, optional. Significance levels for rank tests by rank. Default: ``{0: 0.01, 1: 0.01, 2: 0.01, 3: 0.01}``.
 

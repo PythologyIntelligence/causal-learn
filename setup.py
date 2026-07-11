@@ -26,9 +26,6 @@ setuptools.setup(
         'momentchi2',
         'joblib'
     ],
-    extras_require={
-        'communities': ['communities'],
-    },
     url='https://github.com/py-why/causal-learn',
     packages=setuptools.find_packages(),
     classifiers=[
