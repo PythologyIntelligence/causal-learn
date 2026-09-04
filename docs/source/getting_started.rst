@@ -74,6 +74,8 @@ Contributors
 
 **Coordinators**: Yujia Zheng, Biwei Huang, Wei Chen
 
+**Online platform**: Vishal Verma, Mantej Gill, Guangyi Chen, Haoyue Dai, Yujia Zheng
+
 **Developers**:
 
 - All `community contributors <https://github.com/py-why/causal-learn/graphs/contributors>`_
