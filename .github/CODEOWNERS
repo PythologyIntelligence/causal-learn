@@ -1,0 +1,6 @@
+# Pythology fork ownership.
+# Base-branch protection must require Code Owner review for this to become an enforced gate.
+* @PythologyIntelligence
+
+# Explicitly protect the guardrails themselves.
+.github/ @PythologyIntelligence
