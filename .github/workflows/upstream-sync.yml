@@ -1,0 +1,98 @@
+name: Upstream Sync
+
+on:
+  schedule:
+    - cron: "0 18 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: upstream-sync
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    if: github.repository == 'PythologyIntelligence/causal-learn'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out protected base
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Configure Git identity
+        run: |
+          git config user.name "pythology-upstream-bot"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Fetch upstream
+        run: |
+          git remote add upstream https://github.com/py-why/causal-learn.git
+          git fetch --no-tags upstream main
+
+      - name: Check whether upstream has new commits
+        id: changes
+        shell: bash
+        run: |
+          if git merge-base --is-ancestor upstream/main HEAD; then
+            echo "needed=false" >> "$GITHUB_OUTPUT"
+            echo "Fork already contains upstream/main."
+          else
+            echo "needed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Build review branch
+        if: steps.changes.outputs.needed == 'true'
+        shell: bash
+        run: |
+          git checkout -B automation/upstream-sync main
+          git merge --no-edit --no-ff upstream/main
+          git push --force-with-lease origin HEAD:refs/heads/automation/upstream-sync
+
+      - name: Open or refresh upstream review PR
+        if: steps.changes.outputs.needed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          pr_number="$(gh pr list \
+            --repo "$GITHUB_REPOSITORY" \
+            --base main \
+            --head automation/upstream-sync \
+            --state open \
+            --json number \
+            --jq '.[0].number // empty')"
+
+          body="$(cat <<'EOF'
+This PR was created automatically from the upstream `py-why/causal-learn:main` branch.
+
+**It must never be auto-merged.**
+
+Before merging:
+- all required CI checks must pass;
+- a human reviewer must approve;
+- review workflows, dependencies, build/release code, executable scripts and security-sensitive changes especially carefully;
+- resolve all review conversations.
+
+If upstream cannot merge cleanly, this workflow fails closed and does not update the review branch.
+EOF
+)"
+
+          if [ -z "$pr_number" ]; then
+            gh pr create \
+              --repo "$GITHUB_REPOSITORY" \
+              --base main \
+              --head automation/upstream-sync \
+              --title "chore: review upstream causal-learn changes" \
+              --body "$body"
+          else
+            gh pr edit "$pr_number" \
+              --repo "$GITHUB_REPOSITORY" \
+              --title "chore: review upstream causal-learn changes" \
+              --body "$body"
+          fi
